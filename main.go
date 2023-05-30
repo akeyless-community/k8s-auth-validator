@@ -127,7 +127,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println("Kubeconfig path:", kubeconfig)
+	fmt.Println("Kubeconfig path:", aurora.BrightGreen(kubeconfig))
 
 	config, err := clientcmd.LoadFromFile(kubeconfig)
 	if err != nil {
@@ -151,10 +151,10 @@ func main() {
 	contextDetails := config.Contexts[currentContext]
 	clusterDetails := config.Clusters[contextDetails.Cluster]
 
-	fmt.Println("Current context:", currentContext)
-	fmt.Println("Cluster:", contextDetails.Cluster)
-	fmt.Println("Namespace:", contextDetails.Namespace)
-	fmt.Println("User:", contextDetails.AuthInfo)
+	fmt.Println("Current context:", aurora.BrightGreen(currentContext))
+	fmt.Println("Cluster:", aurora.BrightGreen(contextDetails.Cluster))
+	fmt.Println("Namespace:", aurora.BrightGreen(contextDetails.Namespace))
+	fmt.Println("User:", aurora.BrightGreen(contextDetails.AuthInfo))
 
 	base64EncodedCertificateAuthorityData := base64.StdEncoding.EncodeToString(clusterDetails.CertificateAuthorityData)
 	if options.Verbose {
@@ -222,14 +222,14 @@ func main() {
 	for _, gatewayKubeAuthConfig := range listAllRunningGatewayKubeConfigs {
 		for _, kubeAuthConfig := range gatewayKubeAuthConfig.KubeAuthConfigs.K8SAuths {
 			if kubeAuthConfig.K8SHost == clusterDetails.Server {
-				fmt.Println("Found matching K8S Auth Config for cluster:", kubeAuthConfig.K8SHost)
-				fmt.Println("K8S Auth Config Name:", kubeAuthConfig.Name)
-				fmt.Println("K8S Auth Config Access ID:", kubeAuthConfig.AuthMethodAccessID)
+				fmt.Println("Found matching K8S Auth Config for cluster:", aurora.BrightGreen(kubeAuthConfig.K8SHost))
+				fmt.Println("K8S Auth Config Name:", aurora.BrightGreen(kubeAuthConfig.Name))
+				fmt.Println("K8S Auth Config Access ID:", aurora.BrightGreen(kubeAuthConfig.AuthMethodAccessID))
 
 				if kubeAuthConfig.K8SCaCert != base64EncodedCertificateAuthorityData {
-					fmt.Println("K8S Auth Config CA Cert does NOT match Kubernetes Auth Config Name:", aurora.BrightRed(kubeAuthConfig.Name))
+					fmt.Println("K8S Auth Config CA Cert does NOT match Kubernetes Auth Config Name:", aurora.BrightRed(kubeAuthConfig.K8SCaCert))
 				} else {
-					fmt.Println("K8S Auth Config CA Cert matches the Kubernetes Auth Config Name:", aurora.BrightRed(kubeAuthConfig.Name))
+					fmt.Println("K8S Auth Config CA Cert matches the Kubernetes Auth Config Name:", aurora.BrightGreen("CA Cert matches"))
 				}
 
 				// Validate Token Reviewer JWT Access
@@ -238,9 +238,9 @@ func main() {
 					fmt.Println(err)
 				}
 				if tokenReviewResponse.Status.Authenticated {
-					fmt.Println("Token Reviewer JWT Access is valid for user:", tokenReviewResponse.Status.User.Username)
+					fmt.Println("Token Reviewer JWT Access is valid for user:", aurora.BrightGreen(tokenReviewResponse.Status.User.Username))
 				} else {
-					fmt.Println("Token Reviewer JWT Access is NOT valid for user:", tokenReviewResponse.Status.User.Username)
+					fmt.Println("Token Reviewer JWT Access is NOT valid for user:", aurora.BrightRed(tokenReviewResponse.Status.User.Username))
 				}
 			}
 		}
@@ -316,7 +316,7 @@ func lookupK8sAuthConfigs(cluster akeyless.GwClusterIdentity) KubeAuthConfigs {
 func lookupAllK8sAuthConfigsFromRunningGateways(listRunningGateways []akeyless.GwClusterIdentity) {
 	var lookupThisGateway bool = true
 	if options.GatewayNameFilter != "" {
-		fmt.Println("Gateway Name Filter:", options.GatewayNameFilter)
+		fmt.Println("Gateway Name Filter:", aurora.BrightCyan(options.GatewayNameFilter))
 	}
 	for _, g := range listRunningGateways {
 		if options.GatewayNameFilter != "" {
@@ -333,7 +333,7 @@ func lookupAllK8sAuthConfigsFromRunningGateways(listRunningGateways []akeyless.G
 
 			if usableClusterName != "" {
 				if options.Verbose {
-					fmt.Println("Usable Cluster Name:", usableClusterName)
+					fmt.Println("Usable Cluster Name:", aurora.BrightYellow(usableClusterName))
 				}
 			} else {
 				if options.Verbose {
