@@ -315,10 +315,12 @@ func lookupK8sAuthConfigs(cluster akeyless.GwClusterIdentity) KubeAuthConfigs {
 
 func lookupAllK8sAuthConfigsFromRunningGateways(listRunningGateways []akeyless.GwClusterIdentity) {
 	var lookupThisGateway bool = true
+	if options.GatewayNameFilter != "" {
+		fmt.Println("Gateway Name Filter:", options.GatewayNameFilter)
+	}
 	for _, g := range listRunningGateways {
 		if options.GatewayNameFilter != "" {
 			lookupThisGateway = false
-			fmt.Println("Gateway Name Filter:", options.GatewayNameFilter)
 
 			var displayName = string(*g.DisplayName)
 			var clusterName = string(*g.ClusterName)
