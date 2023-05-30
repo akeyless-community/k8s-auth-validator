@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	akeyless "github.com/akeylesslabs/akeyless-go/v2"
@@ -237,9 +238,9 @@ func main() {
 					fmt.Println(err)
 				}
 				if tokenReviewResponse.Status.Authenticated {
-					fmt.Println("Token Reviewer JWT Access is valid")
+					fmt.Println("Token Reviewer JWT Access is valid for user:", tokenReviewResponse.Status.User.Username)
 				} else {
-					fmt.Println("Token Reviewer JWT Access is NOT valid")
+					fmt.Println("Token Reviewer JWT Access is NOT valid for user:", tokenReviewResponse.Status.User.Username)
 				}
 			}
 		}
@@ -313,14 +314,53 @@ func lookupK8sAuthConfigs(cluster akeyless.GwClusterIdentity) KubeAuthConfigs {
 }
 
 func lookupAllK8sAuthConfigsFromRunningGateways(listRunningGateways []akeyless.GwClusterIdentity) {
+	var lookupThisGateway bool = true
 	for _, g := range listRunningGateways {
-		gwKubeAuthConfigs := lookupK8sAuthConfigs(g)
-		if len(gwKubeAuthConfigs.K8SAuths) > 0 {
-			gatewayKubeAuthConfigs := GatewayKubeAuthConfigs{
-				GwClusterIdentity: &g,
-				KubeAuthConfigs:   gwKubeAuthConfigs,
+		if options.GatewayNameFilter != "" {
+			lookupThisGateway = false
+			fmt.Println("Gateway Name Filter:", options.GatewayNameFilter)
+
+			var displayName = string(*g.DisplayName)
+			var clusterName = string(*g.ClusterName)
+			var usableClusterName string
+			if len(displayName) > 0 {
+				usableClusterName = displayName
+			} else {
+				usableClusterName = clusterName
 			}
-			listAllRunningGatewayKubeConfigs = append(listAllRunningGatewayKubeConfigs, gatewayKubeAuthConfigs)
+
+			if usableClusterName != "" {
+				if options.Verbose {
+					fmt.Println("Usable Cluster Name:", usableClusterName)
+				}
+			} else {
+				if options.Verbose {
+					fmt.Println("Usable Cluster Name is empty so using full cluster name")
+				}
+				usableClusterName = *g.ClusterName
+			}
+
+			if strings.HasPrefix(usableClusterName, options.GatewayNameFilter) {
+				if options.Verbose {
+					fmt.Println("Gateway Name Filter matches so processing gateway")
+				}
+				lookupThisGateway = true
+			} else {
+				if options.Verbose {
+					fmt.Println("Gateway Name Filter does NOT match so skipping gateway")
+				}
+				lookupThisGateway = false
+			}
+		}
+		if lookupThisGateway {
+			gwKubeAuthConfigs := lookupK8sAuthConfigs(g)
+			if len(gwKubeAuthConfigs.K8SAuths) > 0 {
+				gatewayKubeAuthConfigs := GatewayKubeAuthConfigs{
+					GwClusterIdentity: &g,
+					KubeAuthConfigs:   gwKubeAuthConfigs,
+				}
+				listAllRunningGatewayKubeConfigs = append(listAllRunningGatewayKubeConfigs, gatewayKubeAuthConfigs)
+			}
 		}
 	}
 }
