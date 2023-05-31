@@ -1,6 +1,9 @@
 # Kubernetes Cluster Validator with Akeyless
 
-This Go program validates the configuration and status of Kubernetes (k8s) clusters using Akeyless. It interacts with the Akeyless API Gateway and uses kubeconfig for Kubernetes interactions.
+This Go program validates the configuration of the currently connected Kubernetes (k8s) clusters using Akeyless. It interacts with the Akeyless API Gateway and uses kubeconfig for Kubernetes interactions.
+
+## Example
+[![asciicast](https://asciinema.org/a/588498.svg)](https://asciinema.org/a/588498)
 
 ## Prerequisites
 
