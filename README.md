@@ -24,7 +24,7 @@ Navigate to [the releases page](https://github.com/akeyless-community/k8s-auth-v
 ### Running the CLI with token
 
 ```sh
-k8s-auth-validator -t "t-t-432xxxxxxx234354grdsg443"
+k8s-auth-validator -t "t-432xxxxxxx234354grdsg443"
 ```
 
 ### Running the CLI with environment variable token
