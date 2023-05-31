@@ -1,13 +1,38 @@
 # Kubernetes auth Akeyless Validator
 
-This Go CLI validates the configuration of the currently connected Kubernetes (k8s) clusters using Akeyless. It interacts with the Akeyless API Gateway and uses kubeconfig for Kubernetes interactions.
+This Go CLI validates the configuration of the currently connected Kubernetes (k8s) clusters using Akeyless. 
+
+It interacts with the Akeyless API Gateway and uses kubeconfig for Kubernetes interactions.
 
 ## Example
 [![asciicast](https://asciinema.org/a/588498.svg)](https://asciinema.org/a/588498)
 
-## Prerequisites
+## Installation
 
-You need to have Go installed on your system to run this program. Additionally, you will need to have access to the Akeyless API Gateway and a kubeconfig file for your Kubernetes cluster.
+### Homebrew install
+
+```sh
+brew install akeyless-community/kav/kav
+```
+
+### Other installation methods
+
+Navigate to [the releases page](https://github.com/akeyless-community/k8s-auth-validator/releases) and find the correct release binary for your operating system and system architecture. Download the binary and make it executable to connect to the appropriate kubernetes cluster through kubectl.
+
+## Running the CLI
+
+### Running the CLI with token
+
+```sh
+k8s-auth-validator -t "t-t-432xxxxxxx234354grdsg443"
+```
+
+### Running the CLI with environment variable token
+
+```sh
+export AKEYLESS_TOKEN="t-432xxxxxxx234354grdsg443"
+k8s-auth-validator
+```
 
 ## Inputs
 
