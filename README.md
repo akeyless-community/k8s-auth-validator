@@ -45,7 +45,7 @@ The program takes the following command line arguments:
 - `--gateway-name-filter, -g`: A filter for the name of the Akeyless Gateway.
 - `--verbose, -v`: Enables verbose logging to provide detailed debug information.
 
-All arguments can be prefixed with "AKEYLESS_" when used as environment variables.
+All arguments can be prefixed with "AKEYLESS_" when used as environment variables except with all dashes replaced with underscores.
 
 ### Kubeconfig
 
