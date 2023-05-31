@@ -68,18 +68,3 @@ The program outputs several details about the configuration and status of the Ku
 
 Any errors encountered during the execution of the program are also printed.
 
-## Key Functions
-
-- `getKubeconfigPath`: Returns the path to the kubeconfig file.
-- `lookupK8sAuthConfigs`: Retrieves Kubernetes authentication configurations for a given Akeyless Gateway cluster.
-- `lookupAllK8sAuthConfigsFromRunningGateways`: Retrieves Kubernetes authentication configurations for all running Akeyless Gateway clusters.
-- `lookupTokenReviewerStatus`: Validates the Token Reviewer JWT Access for a given Kubernetes host and auth config.
-- `handleError`: Handles errors during the command-line arguments parsing.
-
-## Running the program
-
-To run the program, compile it with Go and run the resulting binary with the appropriate command line arguments. For example:
-
-```bash
-go build main.go
-./main --token YOUR_AKEYLESS_TOKEN
