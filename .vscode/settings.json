@@ -5,11 +5,16 @@
         "clientcmd",
         "clientcmdapi",
         "clientset",
+        "goarch",
+        "goarm",
+        "goreleaser",
         "httpclient",
         "jessevdk",
+        "ldflags",
         "logrusorgru",
         "restclient",
         "tokenreviews",
+        "trimpath",
         "twentythousandtonnesofcrudeoil"
     ]
 }

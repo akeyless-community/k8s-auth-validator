@@ -43,3 +43,12 @@ changelog:
     exclude:
       - '^docs:'
       - '^test:'
+
+brews:
+  - name: kav
+    goarm: 6
+    description: Kubernetes auth Akeyless Validator
+    tap:
+      owner: akeyless-community
+      name: homebrew-kav
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
