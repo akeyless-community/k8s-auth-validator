@@ -48,6 +48,7 @@ brews:
   - name: kav
     goarm: 6
     description: Kubernetes auth Akeyless Validator
+    homepage: https://github.com/akeyless-community/k8s-auth-validator
     tap:
       owner: akeyless-community
       name: homebrew-kav
