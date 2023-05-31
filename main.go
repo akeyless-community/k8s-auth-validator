@@ -240,7 +240,7 @@ func main() {
 				if tokenReviewResponse.Status.Authenticated {
 					fmt.Println("Token Reviewer JWT Access is valid for user:", aurora.BrightGreen(tokenReviewResponse.Status.User.Username))
 				} else {
-					fmt.Println("Token Reviewer JWT Access is NOT valid for user:", aurora.BrightRed(tokenReviewResponse.Spec.Token))
+					fmt.Println("Token Reviewer JWT Access is NOT valid for user:", aurora.BrightRed(kubeAuthConfig.K8STokenReviewerJwt))
 				}
 			}
 		}
