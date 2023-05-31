@@ -1,4 +1,4 @@
-# Kubeernetes auth Akeyless Validator
+# Kubernetes auth Akeyless Validator
 
 This Go CLI validates the configuration of the currently connected Kubernetes (k8s) clusters using Akeyless. It interacts with the Akeyless API Gateway and uses kubeconfig for Kubernetes interactions.
 
