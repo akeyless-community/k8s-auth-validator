@@ -284,7 +284,8 @@ func lookupK8sAuthConfigs(cluster akeyless.GwClusterIdentity) KubeAuthConfigs {
 		// Call the `Do` method, which has a similar interface to the `http.Do` method
 		res, err := httpRequestClient.Do(req)
 		if err != nil {
-			panic(err)
+			fmt.Println("Unable to get k8s auth configs:", cluster.GetClusterUrl(), err)
+			return generateEmptyK8sAuthConfigs()
 		}
 
 		body, err := ioutil.ReadAll(res.Body)
@@ -303,14 +304,18 @@ func lookupK8sAuthConfigs(cluster akeyless.GwClusterIdentity) KubeAuthConfigs {
 		return k8sAuthConfigs
 	} else {
 		if options.Verbose {
-			fmt.Println("Cluster URL is not set")
+			fmt.Println("Cluster URL is not set for ")
 		}
 
-		k8sAuthConfigs := KubeAuthConfigs{
-			K8SAuths: []KubeAuthConfig{},
-		}
-		return k8sAuthConfigs
+		return generateEmptyK8sAuthConfigs()
 	}
+}
+
+func generateEmptyK8sAuthConfigs() KubeAuthConfigs {
+	k8sAuthConfigs := KubeAuthConfigs{
+		K8SAuths: []KubeAuthConfig{},
+	}
+	return k8sAuthConfigs
 }
 
 func lookupAllK8sAuthConfigsFromRunningGateways(listRunningGateways []akeyless.GwClusterIdentity) {
