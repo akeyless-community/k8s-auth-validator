@@ -176,6 +176,7 @@ func main() {
 	}
 	gatewayListResponse, _, err := client.ListGateways(context.Background()).Body(listGatewaysBody).Execute()
 	if err != nil {
+		fmt.Println("Unable to to retrieve list of gateways with provided token", err)
 		panic(err.Error())
 	}
 
@@ -218,11 +219,21 @@ func main() {
 
 	lookupAllK8sAuthConfigsFromRunningGateways(*gatewayListResponse.Clusters)
 
+	foundAnyMatch := false
+
 	// loop through all the auth configs and compare the K8SHost property with the retrieved cluster endpoint of clusterDetails.Server
 	for _, gatewayKubeAuthConfig := range listAllRunningGatewayKubeConfigs {
 		for _, kubeAuthConfig := range gatewayKubeAuthConfig.KubeAuthConfigs.K8SAuths {
 			if kubeAuthConfig.K8SHost == clusterDetails.Server {
-				fmt.Println("Found matching K8S Auth Config for cluster:", aurora.BrightGreen(kubeAuthConfig.K8SHost))
+				foundAnyMatch = true
+				fmt.Println()
+				gatewayClusterName := string(*gatewayKubeAuthConfig.GwClusterIdentity.ClusterName)
+				gatewayClusterDisplayName := string(*gatewayKubeAuthConfig.GwClusterIdentity.DisplayName)
+				fmt.Println("Found matching K8S Auth Config for Gateway Cluster:", aurora.BrightGreen(gatewayClusterName))
+				if len(gatewayClusterDisplayName) > 0 {
+					fmt.Println("Gateway Cluster Display Name:", aurora.BrightGreen(gatewayClusterDisplayName))
+				}
+				fmt.Println("Found matching K8S Auth Config for kubernetes cluster:", aurora.BrightGreen(kubeAuthConfig.K8SHost))
 				fmt.Println("K8S Auth Config Name:", aurora.BrightGreen(kubeAuthConfig.Name))
 				fmt.Println("K8S Auth Config Access ID:", aurora.BrightGreen(kubeAuthConfig.AuthMethodAccessID))
 
@@ -244,6 +255,12 @@ func main() {
 				}
 			}
 		}
+	}
+
+	if !foundAnyMatch {
+		fmt.Println(aurora.BrightRed("========================================================================================================================="))
+		fmt.Println(aurora.BrightRed("Unable to find any existing gateway k8s auth config with this kubernetes host endpoint:"), clusterDetails.Server)
+		fmt.Println(aurora.BrightRed("========================================================================================================================="))
 	}
 }
 
@@ -318,6 +335,17 @@ func generateEmptyK8sAuthConfigs() KubeAuthConfigs {
 	return k8sAuthConfigs
 }
 
+func afterLastSlash(s string) string {
+	i := strings.LastIndex(s, "/")
+	if i == -1 {
+		// No slash found, return the entire string
+		return s
+	}
+	// Return everything after the last slash
+	return s[i+1:]
+}
+
+
 func lookupAllK8sAuthConfigsFromRunningGateways(listRunningGateways []akeyless.GwClusterIdentity) {
 	var lookupThisGateway bool = true
 	if options.GatewayNameFilter != "" {
@@ -329,9 +357,13 @@ func lookupAllK8sAuthConfigsFromRunningGateways(listRunningGateways []akeyless.G
 
 			var displayName = string(*g.DisplayName)
 			var clusterName = string(*g.ClusterName)
+			var shortClusterName = afterLastSlash(clusterName)
 			var usableClusterName string
+			DEFAULT_CLUSTER_NAME := "defaultCluster"
 			if len(displayName) > 0 {
 				usableClusterName = displayName
+			} else if len(shortClusterName) > 0 && shortClusterName != DEFAULT_CLUSTER_NAME {
+				usableClusterName = shortClusterName
 			} else {
 				usableClusterName = clusterName
 			}

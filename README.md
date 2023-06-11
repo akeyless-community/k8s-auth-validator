@@ -45,9 +45,35 @@ The program takes the following command line arguments:
 - `--gateway-name-filter, -g`: A filter for the name of the Akeyless Gateway.
 - `--verbose, -v`: Enables verbose logging to provide detailed debug information.
 
-All arguments can be prefixed with "AKEYLESS_" when used as environment variables except with all dashes replaced with underscores.
+#### Token
 
-### Kubeconfig
+The Akeyless `Token` is required for making authenticated requests to the Akeyless API Gateway. It can be obtained from the Akeyless Web Console or through the gateways web console.
+
+#### API Gateway URL
+
+The `API Gateway URL` can be used to connect to a local Akeyless Gateway API. This can be useful for single tenant deployments of Akeyless or for customers with customer fragments protecting their secrets.
+
+#### Gateway Name Filter
+
+Using the `Gateway Name Filter` can be useful for when you only want to focus on a single gateway and not loop through all the running gateway clusters. 
+
+The `Gateway Name Filter` will first match against the Gateway Display Name and if no match is found, it will match against the Gateway Cluster name as long as the cluster name is not the default value of "defaultCluster", and if the flag is not set it will attempt to match against the full Gateway Name found within the Gateway screen of the Akeyless Web Console.
+
+### Environment Variables
+
+All arguments can be prefixed with "AKEYLESS_" when used as environment variables, simply replace the any remaining dashes with underscores.
+
+```sh
+#export AKEYLESS_TOKEN="t-23fds32432tg8wws23543"
+export AKEYLESS_API_GATEWAY_URL="https://mylocalgateway.company.com:8081"
+#export AKEYLESS_GATEWAY_NAME_FILTER="Gateway1-GKE"
+#export AKEYLESS_GATEWAY_NAME_FILTER="acc-xf4cbk7dmj0kk/p-wyv8r36au41uy/Gateway1-GKE"
+#export AKEYLESS_GATEWAY_NAME_FILTER="Gateway 1 in GKE"
+#export AKEYLESS_VERBOSE="true"
+```
+
+
+## Kubeconfig
 
 The program uses the kubeconfig file from the current user's home directory to interact with the Kubernetes cluster.
 
@@ -67,4 +93,3 @@ The program outputs several details about the configuration and status of the Ku
 6. If the Token Reviewer JWT Access is valid, it prints a message indicating so. If not, it prints a message indicating that it is not valid.
 
 Any errors encountered during the execution of the program are also printed.
-
