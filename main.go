@@ -35,7 +35,7 @@ func getKubeconfigPath() (string, error) {
 
 type Options struct {
 	Token             string `short:"t" long:"token" description:"Akeyless token" required:"true"`
-	ApiGatewayUrl     string `short:"u" long:"api-gateway-url" description:"Akeyless API Gateway URL" required:"false" default:"https://api.akeyless.io"`
+	ApiGatewayUrl     string `short:"u" long:"api-gateway-url" description:"Akeyless API Gateway URL" required:"true" default:"https://api.akeyless.io"`
 	GatewayNameFilter string `short:"g" long:"gateway-name-filter" description:"Akeyless Gateway Name Filter" required:"false"`
 	Verbose           bool   `short:"v" long:"verbose" description:"Show verbose debug information"`
 }
@@ -156,6 +156,23 @@ func main() {
 	fmt.Println("Namespace:", aurora.BrightGreen(contextDetails.Namespace))
 	fmt.Println("User:", aurora.BrightGreen(contextDetails.AuthInfo))
 
+	fmt.Println()
+
+	if len(options.GatewayNameFilter) > 0 {
+		fmt.Println("Gateway Name Filter Flag Set:", aurora.BrightCyan(options.GatewayNameFilter))
+	}
+
+	if options.ApiGatewayUrl != "https://api.akeyless.io" && len(options.ApiGatewayUrl) > 0 {
+		fmt.Println("Akeyless API Gateway URL Flag Set:", aurora.BrightCyan(options.ApiGatewayUrl))
+	}
+	
+	if options.ApiGatewayUrl == "" {
+		fmt.Println("Akeyless API Gateway URL Flag Set:", aurora.BrightCyan(options.ApiGatewayUrl))
+		printErrorMessages("", "Akeyless API Gateway URL is not set")
+		os.Exit(1)
+	}
+
+
 	base64EncodedCertificateAuthorityData := base64.StdEncoding.EncodeToString(clusterDetails.CertificateAuthorityData)
 	if options.Verbose {
 		fmt.Println("Certificate authority data:", base64EncodedCertificateAuthorityData)
@@ -176,8 +193,8 @@ func main() {
 	}
 	gatewayListResponse, _, err := client.ListGateways(context.Background()).Body(listGatewaysBody).Execute()
 	if err != nil {
-		fmt.Println("Unable to to retrieve list of gateways with provided token", err)
-		panic(err.Error())
+		printErrorMessages(err.Error(), "Unable to to retrieve list of gateways with provided token:")
+		os.Exit(1)
 	}
 
 	for _, gateway := range *gatewayListResponse.Clusters {
@@ -258,10 +275,22 @@ func main() {
 	}
 
 	if !foundAnyMatch {
-		fmt.Println(aurora.BrightRed("========================================================================================================================="))
-		fmt.Println(aurora.BrightRed("Unable to find any existing gateway k8s auth config with this kubernetes host endpoint:"), clusterDetails.Server)
-		fmt.Println(aurora.BrightRed("========================================================================================================================="))
+		fmt.Println()
+		printErrorMessages(clusterDetails.Server, "Unable to find any existing gateway k8s auth config with this kubernetes host endpoint:")
 	}
+}
+
+func printErrorMessages(context string, messages ...string) {
+	fmt.Println(aurora.BrightRed("========================================================================================================================="))
+	for _, msg := range messages {
+		errorMessage := aurora.BrightRed(msg)
+		if len(context) > 0 {
+			fmt.Println(errorMessage, context)
+		} else {
+			fmt.Println(errorMessage)
+		}
+	}
+	fmt.Println(aurora.BrightRed("========================================================================================================================="))
 }
 
 func handleError(helpParser *flags.Parser, err error) {
@@ -348,9 +377,6 @@ func afterLastSlash(s string) string {
 
 func lookupAllK8sAuthConfigsFromRunningGateways(listRunningGateways []akeyless.GwClusterIdentity) {
 	var lookupThisGateway bool = true
-	if options.GatewayNameFilter != "" {
-		fmt.Println("Gateway Name Filter:", aurora.BrightCyan(options.GatewayNameFilter))
-	}
 	for _, g := range listRunningGateways {
 		if options.GatewayNameFilter != "" {
 			lookupThisGateway = false

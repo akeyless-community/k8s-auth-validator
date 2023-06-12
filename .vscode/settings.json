@@ -7,6 +7,7 @@
         "clientset",
         "goarch",
         "goarm",
+        "gojek",
         "goreleaser",
         "httpclient",
         "jessevdk",
