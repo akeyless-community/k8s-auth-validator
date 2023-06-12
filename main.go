@@ -37,7 +37,8 @@ type Options struct {
 	Token             string `short:"t" long:"token" description:"Akeyless token" required:"true"`
 	ApiGatewayUrl     string `short:"u" long:"api-gateway-url" description:"Akeyless API Gateway URL" required:"true" default:"https://api.akeyless.io"`
 	GatewayNameFilter string `short:"g" long:"gateway-name-filter" description:"Akeyless Gateway Name Filter" required:"false"`
-	Verbose           bool   `short:"v" long:"verbose" description:"Show verbose debug information"`
+	Verbose           bool   `short:"V" long:"verbose" description:"Show verbose debug information"`
+	Version           bool   `short:"v" long:"version" description:"Print the version number and exit" required:"false"`
 }
 
 type KubeAuthConfig struct {
@@ -101,6 +102,10 @@ type Status struct {
 	Audiences     []string `json:"audiences,omitempty"`
 }
 
+// Declare a new variable that will be set during the build process.
+var version string
+var commit string
+var date string
 var token string
 var timeout = 30000 * time.Millisecond
 var listAllRunningGatewayKubeConfigs = make([]GatewayKubeAuthConfigs, 0)
@@ -119,6 +124,13 @@ func main() {
 
 	_, err := parser.Parse()
 	handleError(parser, err)
+
+	if options.Version {
+        fmt.Println("Version:", version)
+		fmt.Println("Commit:", commit)
+		fmt.Println("Date:", date)
+        os.Exit(0)
+    }
 
 	// Get kubeconfig path
 	kubeconfig, err := getKubeconfigPath()

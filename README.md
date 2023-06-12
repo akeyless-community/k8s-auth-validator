@@ -5,6 +5,7 @@ This Go CLI validates the configuration of the currently connected Kubernetes (k
 It interacts with the Akeyless API Gateway and uses kubeconfig for Kubernetes interactions.
 
 ## Example
+
 [![asciicast](https://asciinema.org/a/588498.svg)](https://asciinema.org/a/588498)
 
 ## Installation
@@ -43,7 +44,8 @@ The program takes the following command line arguments:
 - `--token, -t`: Akeyless token, required for making authenticated requests to the Akeyless API Gateway.
 - `--api-gateway-url, -u`: The URL of the Akeyless API Gateway. By default, it is set to "https://api.akeyless.io".
 - `--gateway-name-filter, -g`: A filter for the name of the Akeyless Gateway.
-- `--verbose, -v`: Enables verbose logging to provide detailed debug information.
+- `--verbose, -V`: Enables verbose logging to provide detailed debug information.
+- `--version, -v`: Prints the version of the program and exits.
 
 #### Token
 
