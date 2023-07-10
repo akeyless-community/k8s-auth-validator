@@ -22,6 +22,7 @@
         },
     ],
     "configurations": [
+        
         {
             "name": "Launch Verbose",
             "type": "go",
@@ -31,7 +32,7 @@
             "args": [
                 "-t",
                 "${input:akeylessToken}",
-                "-v",
+                "-V",
             ],
         },
         {

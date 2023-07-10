@@ -19,9 +19,22 @@ import (
 	flags "github.com/jessevdk/go-flags"
 	"github.com/logrusorgru/aurora/v4"
 	"github.com/vito/twentythousandtonnesofcrudeoil"
-	"k8s.io/client-go/kubernetes"
+	// "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 )
+
+// Declare a variable to hold the exit function. In real code, this will call os.Exit.
+var exitFunc = os.Exit
+
+// mightExit would be part of your actual application code.
+func mightExit(shouldExit bool, errorCode int) {
+	if shouldExit {
+		fmt.Println(aurora.BrightCyan("Exiting application..."))
+		exitFunc(errorCode)
+	}
+
+	fmt.Println("The application continues...")
+}
 
 func getKubeconfigPath() (string, error) {
 	home, err := os.UserHomeDir()
@@ -34,8 +47,8 @@ func getKubeconfigPath() (string, error) {
 }
 
 type Options struct {
-	Token             string `short:"t" long:"token" description:"Akeyless token" required:"true"`
-	ApiGatewayUrl     string `short:"u" long:"api-gateway-url" description:"Akeyless API Gateway URL" required:"true" default:"https://api.akeyless.io"`
+	Token             string `short:"t" long:"token" description:"Akeyless token" required:"false"`
+	ApiGatewayUrl     string `short:"u" long:"api-gateway-url" description:"Akeyless API Gateway URL" required:"false" default:"https://api.akeyless.io"`
 	GatewayNameFilter string `short:"g" long:"gateway-name-filter" description:"Akeyless Gateway Name Filter" required:"false"`
 	Verbose           bool   `short:"V" long:"verbose" description:"Show verbose debug information"`
 	Version           bool   `short:"v" long:"version" description:"Print the version number and exit" required:"false"`
@@ -106,12 +119,13 @@ type Status struct {
 var version string
 var commit string
 var date string
-var token string
 var timeout = 30000 * time.Millisecond
 var listAllRunningGatewayKubeConfigs = make([]GatewayKubeAuthConfigs, 0)
-var clientset *kubernetes.Clientset
-var tokenReviewPayload TokenReviewPayload
 var tokenReviewResponse TokenReviewResponse
+
+const GATEWAY_RUNNING_STATUS = "Running"
+const EXIT_CODE_SUCCESS = 0
+const EXIT_CODE_ERROR = 1
 
 var options Options
 
@@ -126,17 +140,23 @@ func main() {
 	handleError(parser, err)
 
 	if options.Version {
-        fmt.Println("Version:", version)
+		fmt.Println("Version:", version)
 		fmt.Println("Commit:", commit)
 		fmt.Println("Date:", date)
-        os.Exit(0)
-    }
+		mightExit(true, EXIT_CODE_SUCCESS)
+	}
+
+	// error if token in not set
+	if len(options.Token) == 0 {
+		printErrorMessages("", "Akeyless token is not set. Please set the token using the -t or --token flag or set the AKEYLESS_TOKEN environment variable")
+		mightExit(true, EXIT_CODE_ERROR)
+	}
 
 	// Get kubeconfig path
 	kubeconfig, err := getKubeconfigPath()
 	if err != nil {
 		fmt.Println("Error getting kubeconfig path:", err)
-		os.Exit(1)
+		mightExit(true, EXIT_CODE_ERROR)
 	}
 
 	fmt.Println("Kubeconfig path:", aurora.BrightGreen(kubeconfig))
@@ -144,7 +164,7 @@ func main() {
 	config, err := clientcmd.LoadFromFile(kubeconfig)
 	if err != nil {
 		fmt.Println("Error loading kubeconfig:", err)
-		os.Exit(1)
+		mightExit(true, EXIT_CODE_ERROR)
 	}
 
 	// use the current context in kubeconfig
@@ -168,8 +188,6 @@ func main() {
 	fmt.Println("Namespace:", aurora.BrightGreen(contextDetails.Namespace))
 	fmt.Println("User:", aurora.BrightGreen(contextDetails.AuthInfo))
 
-	fmt.Println()
-
 	if len(options.GatewayNameFilter) > 0 {
 		fmt.Println("Gateway Name Filter Flag Set:", aurora.BrightCyan(options.GatewayNameFilter))
 	}
@@ -177,13 +195,16 @@ func main() {
 	if options.ApiGatewayUrl != "https://api.akeyless.io" && len(options.ApiGatewayUrl) > 0 {
 		fmt.Println("Akeyless API Gateway URL Flag Set:", aurora.BrightCyan(options.ApiGatewayUrl))
 	}
-	
-	if options.ApiGatewayUrl == "" {
-		fmt.Println("Akeyless API Gateway URL Flag Set:", aurora.BrightCyan(options.ApiGatewayUrl))
-		printErrorMessages("", "Akeyless API Gateway URL is not set")
-		os.Exit(1)
+
+	// print verbose if flag is enabled
+	if options.Verbose {
+		fmt.Println("Verbose Flag Set:", aurora.BrightCyan(options.Verbose))
 	}
 
+	if options.ApiGatewayUrl == "" {
+		printErrorMessages("", "Akeyless API Gateway URL is not set")
+		mightExit(true, EXIT_CODE_ERROR)
+	}
 
 	base64EncodedCertificateAuthorityData := base64.StdEncoding.EncodeToString(clusterDetails.CertificateAuthorityData)
 	if options.Verbose {
@@ -200,14 +221,7 @@ func main() {
 		},
 	}).V2Api
 
-	listGatewaysBody := akeyless.ListGateways{
-		Token: &options.Token,
-	}
-	gatewayListResponse, _, err := client.ListGateways(context.Background()).Body(listGatewaysBody).Execute()
-	if err != nil {
-		printErrorMessages(err.Error(), "Unable to to retrieve list of gateways with provided token:")
-		os.Exit(1)
-	}
+	gatewayListResponse := retrieveListOfGatewaysUsingToken(client, options.Token)
 
 	for _, gateway := range *gatewayListResponse.Clusters {
 
@@ -292,6 +306,19 @@ func main() {
 	}
 }
 
+func retrieveListOfGatewaysUsingToken(client *akeyless.V2ApiService, token string) akeyless.GatewaysListResponse {
+
+	listGatewaysBody := akeyless.ListGateways{
+		Token: &options.Token,
+	}
+	gatewayListResponse, _, err := client.ListGateways(context.Background()).Body(listGatewaysBody).Execute()
+	if err != nil {
+		printErrorMessages(err.Error(), "Unable to to retrieve list of gateways with provided token:")
+		mightExit(true, EXIT_CODE_ERROR)
+	}
+	return gatewayListResponse
+}
+
 func printErrorMessages(context string, messages ...string) {
 	fmt.Println(aurora.BrightRed("========================================================================================================================="))
 	for _, msg := range messages {
@@ -309,12 +336,12 @@ func handleError(helpParser *flags.Parser, err error) {
 	if err != nil {
 		if flagsErr, ok := err.(*flags.Error); ok && flagsErr.Type == flags.ErrHelp {
 			fmt.Println(err)
-			os.Exit(0)
+			mightExit(true, EXIT_CODE_SUCCESS)
 		} else {
 			fmt.Fprintf(os.Stderr, "error: %s\n", err)
 		}
 
-		os.Exit(1)
+		mightExit(true, EXIT_CODE_ERROR)
 	}
 }
 
@@ -362,7 +389,7 @@ func lookupK8sAuthConfigs(cluster akeyless.GwClusterIdentity) KubeAuthConfigs {
 		return k8sAuthConfigs
 	} else {
 		if options.Verbose {
-			fmt.Println("Cluster URL is not set for ")
+			fmt.Println("Cluster URL is not set for ", cluster.GetClusterName())
 		}
 
 		return generateEmptyK8sAuthConfigs()
@@ -386,10 +413,14 @@ func afterLastSlash(s string) string {
 	return s[i+1:]
 }
 
-
 func lookupAllK8sAuthConfigsFromRunningGateways(listRunningGateways []akeyless.GwClusterIdentity) {
 	var lookupThisGateway bool = true
+	var clusterNameMatches bool = false
+	var clusterUrlIsConfigured bool = false
+	var clusterIsRunning bool = false
+
 	for _, g := range listRunningGateways {
+
 		if options.GatewayNameFilter != "" {
 			lookupThisGateway = false
 
@@ -421,16 +452,61 @@ func lookupAllK8sAuthConfigsFromRunningGateways(listRunningGateways []akeyless.G
 				if options.Verbose {
 					fmt.Println("Gateway Name Filter matches so processing gateway")
 				}
-				lookupThisGateway = true
+				clusterNameMatches = true
 			} else {
 				if options.Verbose {
 					fmt.Println("Gateway Name Filter does NOT match so skipping gateway")
 				}
-				lookupThisGateway = false
+				clusterNameMatches = false
 			}
+		} else {
+			// If no gateway name filter is set then process all gateways
+			clusterNameMatches = true
 		}
+
+		gClusterUrl, gClusterUrlIsSet := g.GetClusterUrlOk()
+
+		if gClusterUrlIsSet {
+			gClusterUrlString := string(*gClusterUrl)
+			if len(gClusterUrlString) > 0 {
+				if options.Verbose {
+					fmt.Println("Gateway cluster URL is set so processing gateway:", aurora.BrightYellow(gClusterUrlString))
+				}
+				clusterUrlIsConfigured = true
+			} else {
+				if options.Verbose {
+					fmt.Println("Gateway cluster URL is NOT set so skipping gateway")
+				}
+				clusterUrlIsConfigured = false
+			}
+		} else {
+			if options.Verbose {
+				fmt.Println("Gateway cluster URL is NOT set so skipping gateway")
+			}
+			clusterUrlIsConfigured = false
+		}
+
+		gStatus, gStatusIsSet := g.GetStatusOk()
+		gStatusString := string(*gStatus)
+
+		if gStatusIsSet && gStatusString != GATEWAY_RUNNING_STATUS {
+			if options.Verbose {
+				fmt.Println("Gateway Status is NOT 'Running':", aurora.BrightYellow(string(*g.Status)), aurora.BrightYellow(*g.ClusterName))
+			}
+
+		} else {
+			if options.Verbose {
+				fmt.Println("Gateway Status is 'Running':", aurora.BrightGreen(string(*g.Status)), aurora.BrightGreen(*g.ClusterName))
+			}
+			clusterIsRunning = true
+		}
+
+		// Only lookup the k8s auth configs if the cluster name matches, the cluster url is configured and the cluster is running
+		lookupThisGateway = clusterNameMatches && clusterUrlIsConfigured && clusterIsRunning
+
 		if lookupThisGateway {
 			gwKubeAuthConfigs := lookupK8sAuthConfigs(g)
+			// If there are any k8s auth configs then add them to the list
 			if len(gwKubeAuthConfigs.K8SAuths) > 0 {
 				gatewayKubeAuthConfigs := GatewayKubeAuthConfigs{
 					GwClusterIdentity: &g,
