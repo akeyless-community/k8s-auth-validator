@@ -47,4 +47,10 @@ func TestRetrieveListOfGatewaysUsingToken(t *testing.T) {
 			retrieveListOfGatewaysUsingToken(client, "expired")
 		})
 	})
+
+	t.Run("Token not set", func(t *testing.T) {
+		assert.PanicsWithValue(t, "Akeyless token is not set. Please set the token using the -t or --token flag or set the AKEYLESS_TOKEN environment variable", func() {
+			retrieveListOfGatewaysUsingToken(client, "")
+		})
+	})
 }
