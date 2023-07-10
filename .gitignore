@@ -80,3 +80,4 @@ Temporary Items
 
 # Don't check binary into repo
 k8s-auth-validator
+.aider*
