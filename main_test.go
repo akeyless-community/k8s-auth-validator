@@ -40,9 +40,6 @@ func TestRetrieveListOfGatewaysUsingToken(t *testing.T) {
 		gatewayListResponse := retrieveListOfGatewaysUsingToken(client, "valid-token")
 		assert.NotNil(t, gatewayListResponse)
 		assert.NotEmpty(t, gatewayListResponse.Clusters)
-		// cluster := gatewayListResponse.Clusters[0]
-		// clusterName := string(*gatewayListResponse.Clusters[0].Name)
-		// assert.Equal(t, "test-gateway", *gatewayListResponse.Clusters[0].Name)
 	})
 
 	t.Run("Expired token", func(t *testing.T) {
