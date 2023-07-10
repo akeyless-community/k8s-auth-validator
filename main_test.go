@@ -21,6 +21,14 @@ func TestRetrieveListOfGatewaysUsingToken(t *testing.T) {
 			// return a 401 error for expired tokens
 			w.WriteHeader(http.StatusUnauthorized)
 			w.Write([]byte(`{"error": "token expired"}`))
+		case "/v2/gateways?token=empty":
+			// return an empty list of gateways
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte(`{"clusters": []}`))
+		case "/v2/gateways?token=error":
+			// return an error response
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(`{"error": "internal server error"}`))
 		default:
 			http.NotFound(w, r)
 		}
@@ -51,6 +59,18 @@ func TestRetrieveListOfGatewaysUsingToken(t *testing.T) {
 	t.Run("Token not set", func(t *testing.T) {
 		assert.PanicsWithValue(t, "Akeyless token is not set. Please set the token using the -t or --token flag or set the AKEYLESS_TOKEN environment variable", func() {
 			retrieveListOfGatewaysUsingToken(client, "")
+		})
+	})
+
+	t.Run("Empty list of gateways", func(t *testing.T) {
+		gatewayListResponse := retrieveListOfGatewaysUsingToken(client, "empty")
+		assert.NotNil(t, gatewayListResponse)
+		assert.Empty(t, gatewayListResponse.Clusters)
+	})
+
+	t.Run("Error response from API Gateway", func(t *testing.T) {
+		assert.PanicsWithValue(t, "Unable to to retrieve list of gateways with provided token:", func() {
+			retrieveListOfGatewaysUsingToken(client, "error")
 		})
 	})
 }
